@@ -11,6 +11,7 @@ import (
 )
 
 func main() {
+	// TODO: set up token retrieval from .env file or equivalent
 	token := ""
 	dg, err := discordgo.New("Bot " + token)
 	if err != nil {
