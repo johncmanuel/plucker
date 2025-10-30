@@ -101,6 +101,16 @@ func sendVideo(s *discordgo.Session, m *discordgo.MessageCreate) {
 			continue
 		}
 
+		// will be using this for debugging purposes
+		fileInfo, err := file.Stat()
+		if err != nil {
+			fmt.Printf("Error getting file info: %v\n", err)
+			return
+		}
+
+		fileSize := fileInfo.Size() // Returns the file size in bytes as an int64
+		fmt.Printf("File size: %d bytes\n", fileSize)
+
 		_, err = s.ChannelMessageSendComplex(m.ChannelID, &discordgo.MessageSend{
 			Files: []*discordgo.File{
 				{
