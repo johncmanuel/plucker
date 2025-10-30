@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/url"
@@ -11,6 +12,7 @@ import (
 	"regexp"
 	"slices"
 	"strconv"
+	"strings"
 	"syscall"
 
 	"github.com/bwmarrin/discordgo"
@@ -28,6 +30,9 @@ var supportedDomains = []string{
 	"www.youtube.com",
 	"youtube.com",
 }
+
+// custom error for exceeded file limit
+var ErrMaxFilesizeExceeded = errors.New("video download aborted: file is larger than the maximum allowed size")
 
 const (
 	videosDir            = "videos"
@@ -101,14 +106,22 @@ func sendVideo(s *discordgo.Session, m *discordgo.MessageCreate) {
 		filePath, err := downloadVideo(urlStr, m.ID)
 		if err != nil {
 			log.Printf("Failed to download video: %v", err)
-			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Sorry, I couldn't download the video from %s", urlStr))
+			s.ChannelMessageSendReply(m.ChannelID, fmt.Sprintf("Sorry, I couldn't download this video, here's why: %v", err), m.Reference())
+			err = RemoveContents(videosDir)
+			if err != nil {
+				log.Printf("Error removing %s: %v", videosDir, err)
+			}
 			continue
 		}
 
 		file, err := os.Open(filePath)
 		if err != nil {
 			log.Printf("Failed to open downloaded file: %v", err)
-			s.ChannelMessageSend(m.ChannelID, "Error: Could not open downloaded file.")
+			s.ChannelMessageSendReply(m.ChannelID, "Error: Could not open downloaded file.", m.Reference())
+			err = RemoveContents(videosDir)
+			if err != nil {
+				log.Printf("Error removing %s: %v", videosDir, err)
+			}
 			continue
 		}
 
@@ -131,7 +144,7 @@ func sendVideo(s *discordgo.Session, m *discordgo.MessageCreate) {
 		if err != nil {
 			log.Printf("Error removing %s: %v", videosDir, err)
 		}
-		log.Printf("cleaned videos")
+		log.Printf("Cleared contents of %s", videosDir)
 	}
 }
 
@@ -160,11 +173,10 @@ func isSupportedURL(urlStr string) bool {
 
 func downloadVideo(urlStr, messageID string) (string, error) {
 	outputPath := filepath.Join(videosDir, fmt.Sprintf("%s.mp4", messageID))
-
 	size := fmt.Sprintf("%dM", getMaxFileSizeMB())
 
 	// Args explanation
-	// -f "format": Selects the best video/audio under a limit (a common Discord limit).
+	// --max-filesize: aborts downloads if download exceeds a specified limit
 	// --merge-output-format mp4: Ensures the final file is an mp4.
 	// -o: Specifies the output path.
 	cmd := exec.Command("yt-dlp",
@@ -175,6 +187,15 @@ func downloadVideo(urlStr, messageID string) (string, error) {
 	)
 
 	output, err := cmd.CombinedOutput()
+
+	// yt-dlp doesn't treat download aborts as errors, so look through its output for this specific
+	// error
+	if strings.Contains(string(output), "File is larger than max-filesize") {
+		log.Printf("yt-dlp aborted for %s: file larger than max file size: %s", urlStr, size)
+
+		return "", ErrMaxFilesizeExceeded
+	}
+
 	if err != nil {
 		log.Printf("yt-dlp error for URL %s: %s\nOutput: %s", urlStr, err, string(output))
 		return "", fmt.Errorf("yt-dlp failed: %s", err)
