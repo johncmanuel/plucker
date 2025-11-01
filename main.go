@@ -82,7 +82,8 @@ func sendVideo(s *discordgo.Session, m *discordgo.MessageCreate) {
 		filePath, err := ytdlp.DownloadVideo(urlStr, m.ID)
 		if err != nil {
 			log.Printf("Failed to download video: %v", err)
-			s.ChannelMessageSendReply(m.ChannelID, fmt.Sprintf("Sorry, I couldn't download this video, here's why: %v", err), m.Reference())
+			s.ChannelMessageSendReply(m.ChannelID, fmt.Sprintf("Error: unable to download video. %v", err), m.Reference())
+
 			err = utils.RemoveContents(ytdlp.VideosDir)
 			if err != nil {
 				log.Printf("Error removing %s: %v", ytdlp.VideosDir, err)
@@ -94,6 +95,7 @@ func sendVideo(s *discordgo.Session, m *discordgo.MessageCreate) {
 		if err != nil {
 			log.Printf("Failed to open downloaded file: %v", err)
 			s.ChannelMessageSendReply(m.ChannelID, "Error: Could not open downloaded file.", m.Reference())
+
 			err = utils.RemoveContents(ytdlp.VideosDir)
 			if err != nil {
 				log.Printf("Error removing %s: %v", ytdlp.VideosDir, err)
@@ -104,12 +106,31 @@ func sendVideo(s *discordgo.Session, m *discordgo.MessageCreate) {
 		// will be using this for debugging purposes
 		fileInfo, err := file.Stat()
 		if err != nil {
-			fmt.Printf("Error getting file info: %v\n", err)
-			return
+			log.Printf("Error getting file info: %v\n", err)
+			s.ChannelMessageSendReply(m.ChannelID, "Error: could not get file info for one of them.", m.Reference())
+
+			file.Close()
+			err = utils.RemoveContents(ytdlp.VideosDir)
+			if err != nil {
+				log.Printf("Error removing %s: %v", ytdlp.VideosDir, err)
+			}
+			continue
 		}
 
-		fileSize := fileInfo.Size() // Returns the file size in bytes as an int64
-		fmt.Printf("File size: %d bytes\n", fileSize)
+		fileSizeMb := float64(fileInfo.Size()) / (1024 * 1024)
+		log.Printf("File size: %.2f MB\n", fileSizeMb)
+
+		if fileSizeMb > float64(ytdlp.DefaultMaxFileSizeMB) {
+			log.Printf("file size, %.2f, is larger than default max file size, can't send it to discord!", fileSizeMb)
+			s.ChannelMessageSendReply(m.ChannelID, "Error: video is larger than discord's file limit, can't send it!", m.Reference())
+
+			file.Close()
+			err = utils.RemoveContents(ytdlp.VideosDir)
+			if err != nil {
+				log.Printf("Error removing %s: %v", ytdlp.VideosDir, err)
+			}
+			continue
+		}
 
 		_, err = s.ChannelMessageSendComplex(m.ChannelID, &discordgo.MessageSend{
 			Files: []*discordgo.File{
