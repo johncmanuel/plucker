@@ -3,6 +3,8 @@ Discord bot that retrieves short form content from user-given links and download
 
 https://github.com/user-attachments/assets/346824d3-238c-4040-809a-c412d55a6293
 
+> video used for testing: https://youtube.com/shorts/T0Q3qJmRJpA?si=agJFAmmKgcyRUlRC
+
 ## Setup
 
 1. Set up your discord bot and invite it to a server with *message content intent* and *send messages* permissions
