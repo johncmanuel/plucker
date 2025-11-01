@@ -85,7 +85,7 @@ func sendVideo(s *discordgo.Session, m *discordgo.MessageCreate) {
 		filePath, err := ytdlp.DownloadVideo(urlStr, m.ID)
 		if err != nil {
 			log.Printf("Failed to download video: %v", err)
-			s.ChannelMessageSendReply(m.ChannelID, fmt.Sprintf("Error: unable to download video. %v", err), m.Reference())
+			// s.ChannelMessageSendReply(m.ChannelID, fmt.Sprintf("Error: unable to download video. %v", err), m.Reference())
 
 			err = utils.RemoveContents(ytdlp.VideosDir)
 			if err != nil {
