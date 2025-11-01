@@ -1,8 +1,6 @@
 # plucker
 Discord bot that retrieves short form content from user-given links and downloads them to Discord chats.
 
-![[./docs/demo.mp4]]
-
 ## Setup
 
 1. Set up your discord bot and invite it to a server with *message content intent* and *send messages* permissions
