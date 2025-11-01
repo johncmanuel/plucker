@@ -23,21 +23,20 @@ func main() {
 
 	token := os.Getenv("BOT_TOKEN")
 	if token == "" {
-		log.Fatalln("Error: BOT_TOKEN environment variable not set.")
+		panic("Error: BOT_TOKEN environment variable not set.")
 	}
 
 	dg, err := discordgo.New("Bot " + token)
 	if err != nil {
-		fmt.Println("error starting plucker")
+		panic("error starting plucker")
 	}
 
 	dg.AddHandler(sendVideo)
-
 	dg.Identify.Intents = discordgo.IntentsGuildMessages
 
 	err = dg.Open()
 	if err != nil {
-		fmt.Println("Can't open connection")
+		panic("Can't open connection")
 	}
 
 	// clean up directory
@@ -103,7 +102,6 @@ func sendVideo(s *discordgo.Session, m *discordgo.MessageCreate) {
 			continue
 		}
 
-		// will be using this for debugging purposes
 		fileInfo, err := file.Stat()
 		if err != nil {
 			log.Printf("Error getting file info: %v\n", err)

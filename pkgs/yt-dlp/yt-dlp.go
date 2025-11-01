@@ -41,7 +41,7 @@ const (
 	defaultDownloadTimeoutSeconds = 15 // This seems like a good default threshold
 )
 
-func DownloadVideo(urlStr, messageID string) (string, error) {
+func DownloadVideo(urlStr string, messageID string) (string, error) {
 	outputPath := filepath.Join(VideosDir, fmt.Sprintf("%s.mp4", messageID))
 	size := fmt.Sprintf("%vM", GetMaxFileSizeMB())
 	log.Printf("max file size: %v", size)
@@ -103,7 +103,6 @@ func DownloadVideo(urlStr, messageID string) (string, error) {
 			output := <-outputChan
 			if strings.Contains(string(output), "File is larger than max-filesize") {
 				log.Printf("yt-dlp aborted for %s: file larger than max file size: %s", urlStr, size)
-
 				return "", ErrMaxFilesizeExceeded
 			}
 
