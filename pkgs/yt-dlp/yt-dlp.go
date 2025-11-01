@@ -31,7 +31,7 @@ var ErrMaxFilesizeExceeded = errors.New("video download aborted: file is larger 
 
 // ErrDownloadTimeout is a custom error for timeouts. Mainly used for manually stopping users from
 // downloading large videos
-var ErrDownloadTimeout = errors.New("video download aborted: process took too long")
+var ErrDownloadTimeout = errors.New("video download aborted: process took too long, are you downloading a large video?")
 
 var ErrProcessKilled = errors.New("video download failed: process was killed (likely out of memory)")
 

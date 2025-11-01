@@ -23,12 +23,12 @@ func main() {
 
 	token := os.Getenv("BOT_TOKEN")
 	if token == "" {
-		panic("Error: BOT_TOKEN environment variable not set.")
+		log.Fatalln("Error: BOT_TOKEN environment variable not set.")
 	}
 
 	dg, err := discordgo.New("Bot " + token)
 	if err != nil {
-		panic("error starting plucker")
+		log.Fatalln("error starting plucker")
 	}
 
 	dg.AddHandler(sendVideo)
@@ -36,13 +36,13 @@ func main() {
 
 	err = dg.Open()
 	if err != nil {
-		panic("Can't open connection")
+		log.Fatalln("Can't open connection")
 	}
 
 	// clean up directory
 	err = utils.RemoveContents(ytdlp.VideosDir)
 	if err != nil {
-		log.Printf("Error removing %s: %v", ytdlp.VideosDir, err)
+		log.Printf("Error removing contents of %s: %v", ytdlp.VideosDir, err)
 	}
 
 	err = os.MkdirAll(ytdlp.VideosDir, 0o755)
@@ -56,7 +56,11 @@ func main() {
 	<-sc
 
 	fmt.Println("Shutting down Plucker.")
-	dg.Close()
+
+	err = dg.Close()
+	if err != nil {
+		log.Printf("could not close gracefully: %s", err)
+	}
 }
 
 func sendVideo(s *discordgo.Session, m *discordgo.MessageCreate) {
