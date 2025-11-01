@@ -15,6 +15,7 @@ RUN CGO_ENABLED=0 go build -o plucker-prod -ldflags="-w -s" .
 
 FROM alpine:3.20
 
+# im pretty sure ca-certificates is needed for HTTPS requests
 RUN apk add --no-cache yt-dlp ca-certificates
 
 WORKDIR /app
